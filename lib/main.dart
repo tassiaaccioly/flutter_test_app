@@ -9,7 +9,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: "Startup Name Generator",
+        title: "Test App",
+        theme: ThemeData(
+          primaryColor: Colors.purple,
+        ),
         home: RandomWords(),
         );
   }
@@ -22,24 +25,22 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
-  final _textMainStyle = TextStyle(color: Colors.purple, fontSize: 18.0, fontWeight: FontWeight.bold);
+  final _saved = Set<WordPair>();
+  final _textMainStyle = TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: Colors.purple);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(Icons.menu),
         title: Text("Statup Name Generator"),
         actions: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Icon(Icons.search),
           ),
+          IconButton(icon: Icon(Icons.list), onPressed: _pushSaved),
         ],
-        backgroundColor: Colors.purple,
       ),
-      body: Center(
-        child: _buildSuggestions(),
-      ),
+      body: _buildSuggestions(),
     );
   }
 
@@ -59,13 +60,57 @@ class _RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildRow(WordPair pair) {
+    final alreadySaved = _saved.contains(pair);
     return ListTile(
       title: Text(
         pair.asPascalCase,
         style: _textMainStyle,
       ),
       leading: Icon(Icons.arrow_right_alt, color: Colors.purple),
-      trailing: Icon(Icons.favorite_border, color: Colors.purple),
+      trailing: Icon(
+          alreadySaved ? Icons.favorite : Icons.favorite_border,
+          color: alreadySaved ? Colors.purple : Colors.purpleAccent,
+      ),
+      onTap: () {
+        setState(() {
+          if (alreadySaved) {
+            _saved.remove(pair);
+          } else {
+            _saved.add(pair);
+          }
+        });
+      },
+    );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          final tiles = _saved.map(
+              (WordPair pair) {
+                return ListTile(
+                  title: Text(
+                    pair.asPascalCase,
+                    style: _textMainStyle,
+                  ),
+                  leading: Icon(Icons.arrow_right_alt, color: Colors.purple),
+                );
+              },
+          );
+          final divided = ListTile.divideTiles(
+            context:context,
+            tiles: tiles,
+          ).toList();
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text("Saved Suggestions"),
+            ),
+            body: ListView(children: divided),
+          );
+        },
+      ),
     );
   }
 }
